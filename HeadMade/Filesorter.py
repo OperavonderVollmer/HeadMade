@@ -3,69 +3,109 @@ from abc import ABC, abstractmethod
 import re
 import os
 import traceback
+import shutil
 
 
-"""
+def organize_by_rules(path_and_rules: dict[str, list[tuple[list, str]]]) -> None:
+    for path in path_and_rules.keys():
+        if not os.path.exists(path):
+            opr.print_from("Filesorter - Organize", f"{{bg_red}}Path {path} does not exist{{def}}")
+            return
+        
+        opr.print_from("Filesorter - Organize", f"{{bg_whi}}Organizing {path}{{def}}")
+        _judicial_court(path, path_and_rules[path])
 
-    Rules look like this
-    key : value
-    regex expression : directory (should be absolute path to a directory)
+def _judicial_court(path, rule_destination: list[tuple[list, str]]) -> None:
+    
+    dir = opr.enumerate_directory(path, 10, True)
+    _due_process(dir, rule_destination, path)
+    
 
-"""
+def _due_process(dir: list[str, dict[str, list]], rule_destination: list[tuple[list, str]], previous_path: str) -> None:
+    for _ in dir:
+        if isinstance(_, str):
+            #judge(crime=rule, defendant=_, scene=previous_path, jail=destination)
+            _courtroom(rule_destination, _, previous_path)
 
-class iSorter:
-    def __init__(self, path: str, depth: int, rules: dict[str, str]):
-        self._path = path
-        self._depth = depth
-        self._dir = opr.enumerate_directory(self._path, self._depth, True)
-        self._rules = rules
-
-
-
-    def sort(self):
-
-
-
-
-        pass
-
-criteria = [r".*\.(mp4|mp3|png)$"]
+        elif isinstance(_, dict):
+            for sublist in _.values():
+                _due_process(dir=sublist, rule_destination=rule_destination, previous_path=previous_path)
+        else:
+            opr.print_from("Filesorter - Due Process", f"{{bg_yel}}Skipping unknown type: {type(_)}{{def}}")
 
 
+def _courtroom(rule_destination: list[tuple[list, str]], defendent: str, previous_path: str) -> None:
 
-def move_files(path: str, rules: dict) -> bool:
+    for rules, destination in rule_destination:
+        for rule in rules:
+            judge(crime=rule, defendant=defendent, scene=previous_path, jail=destination)
 
-    try:
-        for rule, directory in rules.items():
-            if re.match(rule, path):
-                opr.print_from("Filesorter", f"{{bg_gre}}File {os.path.basename(path)} match found{{def}}\nPlacing file in {directory}")           
-                os.rename(path, os.path.join(directory, os.path.basename(path)))
-                return True
 
-        opr.print_from("Filesorter", f"{{bg_blu}}File {os.path.basename(path)} does not match any rules{{def}}") 
-        return True
 
-    except Exception as e:
-        opr.error_pretty(e, "Filesorter")
-        return False
+def judge(crime: str, defendant: str, scene: str, jail: str) -> None:
+    global MOVED_FOLDERS
+
+    if re.match(crime, defendant):
+        opr.print_from("Filesorter - Judge", f"{{bg_gre}}{os.path.basename(defendant)} matches rule {crime}{{def}}")
+        opr.print_from("Filesorter - Judge", f"{{bg_yel}}Old path: {defendant}{{def}}")
+        
+        rel_path = os.path.relpath(defendant, scene)
+
+        opr.print_from("Filesorter - Judge", f"{{bg_yel}}Relative path: {rel_path}{{def}}")
 
     
-rules = {
-    r".*\.(py)$": r"C:\Users\Vaynes\Desktop\Media"
-} 
+        if not os.path.exists(jail):
+            os.makedirs(jail, exist_ok=True)
 
-"""
+        try:
+            # checks if the file is inside the directory under watch and moves it exclusively
+            if os.path.dirname(defendant) == scene:
+                opr.print_from("Filesorter - Judge", f"{{bg_blu}}Moving '{os.path.basename(defendant)}' from '{os.path.dirname(defendant)}' to '{jail}'{{def}}")
+                shutil.move(defendant, jail)
+                return
 
-    Dict
-    path : [rule, new path]
+            # if it isn't gets the parent directory of the file under the director under watch and moves that
+            path_folder = defendant
+            while True:
+                e = os.path.dirname(path_folder)
+                if e == scene:
+                    break
+                path_folder = e
+            
+            if path_folder in MOVED_FOLDERS:
+                opr.print_from("Filesorter - Judge", f"{{cya}}Directory '{os.path.basename(path_folder)}' has already been moved{{def}}")
+                return
 
-"""
+            MOVED_FOLDERS.add(path_folder)
+
+            new_path= os.path.join(jail, os.path.basename(path_folder))
+            opr.print_from("Filesorter - Judge", f"{{bg_blu}}Moving directory '{os.path.basename(path_folder)}' from '{path_folder}' to '{new_path}'{{def}}")
+            shutil.move(path_folder, new_path)
+
+        except FileNotFoundError as e:
+            opr.error_pretty(e, "Filesorter - Judge", f"{{bg_red}}{defendant} has already been moved or does not exists{{def}}")
+
+        except PermissionError as e:
+            opr.error_pretty(e, "Filesorter - Judge", f"{{bg_red}}Permission error while moving {defendant}: {e}{{def}}")
+
+        except Exception as e:
+            opr.error_pretty(e, "Filesorter - Judge", f"{{bg_red}}An unexpected error occurred while moving {defendant}: {e}{{def}}")
 
 
+def organize_directory(path):
+    for _ in path:
+        if isinstance(_, str):
+            judge(_)
+        elif isinstance(_, dict):
+            value = _.values()
+            organize_directory(value)
+        elif isinstance(_, list):
+            organize_directory(_)
+        else:
+            opr.print_from("Filesorter", f"{{bg_yel}}Skipping unknown type: {type(_)}{{def}}")
+            
 
-
+MOVED_FOLDERS = set()
 
 if __name__ == "__main__":
-    test_path = opr.input_from("Filesorter", "{blu}Enter the path to the directory you want to sort{def}")
-    cleaned_path = opr.clean_path(test_path)
-    move_files(cleaned_path, rules)
+    pass
