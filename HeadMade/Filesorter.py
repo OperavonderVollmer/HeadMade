@@ -1,111 +1,77 @@
+import ruler
+import sorter
 from OperaPowerRelay import opr
-from abc import ABC, abstractmethod
-import re
-import os
-import traceback
-import shutil
 
 
-def organize_by_rules(path_and_rules: dict[str, list[tuple[list, str]]]) -> None:
-    for path in path_and_rules.keys():
-        if not os.path.exists(path):
-            opr.print_from("Filesorter - Organize", f"{{bg_red}}Path {path} does not exist{{def}}")
-            return
-        
-        opr.print_from("Filesorter - Organize", f"{{bg_whi}}Organizing {path}{{def}}")
-        _judicial_court(path, path_and_rules[path])
+DEBUG = False
 
-def _judicial_court(path, rule_destination: list[tuple[list, str]]) -> None:
+def quickly() -> bool:
     
-    dir = opr.enumerate_directory(path, 10, True)
-    _due_process(dir, rule_destination, path)
-    
+    """
+    Executes the file sorting process using predefined rules.
 
-def _due_process(dir: list[str, dict[str, list]], rule_destination: list[tuple[list, str]], previous_path: str) -> None:
-    for _ in dir:
-        if isinstance(_, str):
-            #judge(crime=rule, defendant=_, scene=previous_path, jail=destination)
-            _courtroom(rule_destination, _, previous_path)
-
-        elif isinstance(_, dict):
-            for sublist in _.values():
-                _due_process(dir=sublist, rule_destination=rule_destination, previous_path=previous_path)
-        else:
-            opr.print_from("Filesorter - Due Process", f"{{bg_yel}}Skipping unknown type: {type(_)}{{def}}")
-
-
-def _courtroom(rule_destination: list[tuple[list, str]], defendent: str, previous_path: str) -> None:
-
-    for rules, destination in rule_destination:
-        for rule in rules:
-            judge(crime=rule, defendant=defendent, scene=previous_path, jail=destination)
-
-
-
-def judge(crime: str, defendant: str, scene: str, jail: str) -> None:
-    global MOVED_FOLDERS
-
-    if re.match(crime, defendant):
-        opr.print_from("Filesorter - Judge", f"{{bg_gre}}{os.path.basename(defendant)} matches rule {crime}{{def}}")
-        opr.print_from("Filesorter - Judge", f"{{bg_yel}}Old path: {defendant}{{def}}")
-        
-        rel_path = os.path.relpath(defendant, scene)
-
-        opr.print_from("Filesorter - Judge", f"{{bg_yel}}Relative path: {rel_path}{{def}}")
+    This function initializes the file sorter, sets the debug mode to false,
+    and invokes the sorting mechanism based on the configuration rules.
+    It then deinitializes the file sorter and returns the success status of the operation.
 
     
-        if not os.path.exists(jail):
-            os.makedirs(jail, exist_ok=True)
+    Note
+    ----
+    This is the proper way to use the file sorter using the module. Running this module directly would use the interface and prompt the user for input, which is probably not what you want. 
 
-        try:
-            # checks if the file is inside the directory under watch and moves it exclusively
-            if os.path.dirname(defendant) == scene:
-                opr.print_from("Filesorter - Judge", f"{{bg_blu}}Moving '{os.path.basename(defendant)}' from '{os.path.dirname(defendant)}' to '{jail}'{{def}}")
-                shutil.move(defendant, jail)
-                return
-
-            # if it isn't gets the parent directory of the file under the director under watch and moves that
-            path_folder = defendant
-            while True:
-                e = os.path.dirname(path_folder)
-                if e == scene:
-                    break
-                path_folder = e
-            
-            if path_folder in MOVED_FOLDERS:
-                opr.print_from("Filesorter - Judge", f"{{cya}}Directory '{os.path.basename(path_folder)}' has already been moved{{def}}")
-                return
-
-            MOVED_FOLDERS.add(path_folder)
-
-            new_path= os.path.join(jail, os.path.basename(path_folder))
-            opr.print_from("Filesorter - Judge", f"{{bg_blu}}Moving directory '{os.path.basename(path_folder)}' from '{path_folder}' to '{new_path}'{{def}}")
-            shutil.move(path_folder, new_path)
-
-        except FileNotFoundError as e:
-            opr.error_pretty(e, "Filesorter - Judge", f"{{bg_red}}{defendant} has already been moved or does not exists{{def}}")
-
-        except PermissionError as e:
-            opr.error_pretty(e, "Filesorter - Judge", f"{{bg_red}}Permission error while moving {defendant}: {e}{{def}}")
-
-        except Exception as e:
-            opr.error_pretty(e, "Filesorter - Judge", f"{{bg_red}}An unexpected error occurred while moving {defendant}: {e}{{def}}")
+    If you want to set rules, use the ruler's filesorter_wizard() function. 
 
 
-def organize_directory(path):
-    for _ in path:
-        if isinstance(_, str):
-            judge(_)
-        elif isinstance(_, dict):
-            value = _.values()
-            organize_directory(value)
-        elif isinstance(_, list):
-            organize_directory(_)
-        else:
-            opr.print_from("Filesorter", f"{{bg_yel}}Skipping unknown type: {type(_)}{{def}}")
-            
+    Returns
+    -------
+    bool
+        True if the files were successfully sorted, False otherwise.
+    """
 
-MOVED_FOLDERS = set()
+    ruler.initialize()
+    ruler.DEBUG = False
+
+
+    result = sorter.organize_by_rules(ruler.CONFIG)
+    if result:
+        opr.print_from("Filesorter - Quickly", "Successfully sorted files!")
+
+    else:
+        opr.print_from("Filesorter - Quickly", "Failed to sort files!")
+    
+
+    ruler.deinitialize()
+
+    return result
 
 if __name__ == "__main__":
-    pass
+    opr.wipe(False)
+    ruler.initialize()
+    ruler.DEBUG = DEBUG
+    
+    while True:
+        try:
+            decision = opr.input_from("Filesorter - Main", "📂 Edit Rules [1] | 🚀 Start Sorting [2] | 🚪 Exit [3]", 1)
+
+            if decision == "1":
+                opr.wipe(False)
+                ruler.filesorter_wizard()
+
+            elif decision == "2":
+                sorter.organize_by_rules(ruler.CONFIG)
+
+            elif decision == "3":
+                break
+
+            else:
+                opr.print_from("Filesorter - Main", "{bg_red}Invalid input{def}")
+
+        except KeyboardInterrupt:
+            break
+
+        except Exception as e:
+            opr.error_pretty(e, "Filesorter - Main")
+            break
+
+    ruler.deinitialize()
+    opr.print_from("Filesorter - Main", "Exiting Filesorter...")
