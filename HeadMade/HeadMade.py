@@ -261,7 +261,7 @@ def direct_run() -> None:
             opr.list_choices([
                 "📂 Start Filesorter",
                 "⏰ Set Time Mode",
-                "⚙️  Configure Filesorter",
+                "⚙️ Configure Filesorter",
                 "🚪 Exit"            
             ], "Welcome to Headmade", 1)
 
