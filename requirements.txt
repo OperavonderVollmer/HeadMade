@@ -1,1 +1,3 @@
+Pillow
+pystray
 git+https://github.com/OperavonderVollmer/OperaPowerRelay.git

@@ -5,6 +5,8 @@ setup(
     version="1.0",
     packages=find_packages(),
     install_requires=[
+        "Pillow",
+        "pystray",
         "OperaPowerRelay @ git+https://github.com/OperavonderVollmer/OperaPowerRelay.git",
     ],
     python_requires=">=3.7",

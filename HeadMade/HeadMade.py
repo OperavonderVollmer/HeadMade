@@ -4,6 +4,9 @@ import os
 import datetime
 import threading
 import time
+import trayicon
+import sys
+
 
 FILEPATH = ""
 CONFIG = {}
@@ -11,9 +14,12 @@ TIME_MODE = ""
 TIME_FRAME = ""
 CONFIG_NAME = "config_headmade.json"
 
-FILESORTER_THREAD = None
+HEADLESS = sys.argv[1] if len(sys.argv) > 1 else "No"
 
-stop_signal = False
+FILESORTER_THREAD = None
+WIZARD_THREAD = None    
+
+STOP_SIGNAL = threading.Event()
 
 def setup(mode: str = "", frame : str = "") -> None:
     """
@@ -159,7 +165,7 @@ def _filesorter_thread() -> None:
     
     first_run = True
     
-    while not stop_signal:    
+    while not STOP_SIGNAL.is_set():    
         wait = 0
         if TIME_MODE == "Interval":
             wait = int(TIME_FRAME)
@@ -193,9 +199,9 @@ def start() -> None:
     None
     """
     global FILESORTER_THREAD
-    global stop_signal
+    global STOP_SIGNAL
 
-    stop_signal = False
+    STOP_SIGNAL.clear()
     FILESORTER_THREAD = threading.Thread(target=_filesorter_thread, daemon=True)
     FILESORTER_THREAD.start()
 
@@ -209,10 +215,10 @@ def stop() -> None:
     -------
     None
     """
-    global stop_signal
+    global STOP_SIGNAL
     global FILESORTER_THREAD
 
-    stop_signal = True
+    STOP_SIGNAL.set()
 
 def initialize(filepath: str = "") -> None:
     global FILEPATH
@@ -235,28 +241,10 @@ def deinitialize() -> None:
 
     opr.save_json("Headmade - Save", os.path.dirname(FILEPATH), CONFIG, filename=CONFIG_NAME)
 
+def headmade_wizard() -> None:
+    global STOP_SIGNAL
 
-def direct_run() -> None:
-    """
-    Runs the Headmade application directly.
-
-    This function initializes the Headmade configuration and starts the file sorter thread.
-    It then enters a loop where it waits for user input to sort files now, set the time mode, configure the file sorter, or exit the application.
-    If the user chooses to exit, the file sorter thread is stopped and the configuration is saved.
-
-    Returns
-    -------
-    None
-    """
-    
-    opr.wipe()
-    initialize()
-    global TIME_MODE
-    global TIME_FRAME
-
-    Filesorter.ruler.FILEPATH = FILEPATH
-
-    while True:
+    while not STOP_SIGNAL.is_set():
         try:
             opr.list_choices([
                 "📂 Start Filesorter",
@@ -287,6 +275,7 @@ def direct_run() -> None:
                 Filesorter.ruler.filesorter_wizard()
 
             elif decision == "4":
+                stop()
                 break
 
             else:
@@ -294,13 +283,49 @@ def direct_run() -> None:
 
             opr.wipe()
 
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, EOFError):
             break
 
         except Exception as e:
             opr.error_pretty(e, "Headmade - Main")
             break
 
+    stop()
+
+
+def direct_run() -> None:
+    """
+    Runs the Headmade application directly.
+
+    This function initializes the Headmade configuration and starts the file sorter thread.
+    It then enters a loop where it waits for user input to sort files now, set the time mode, configure the file sorter, or exit the application.
+    If the user chooses to exit, the file sorter thread is stopped and the configuration is saved.
+
+    Returns
+    -------
+    None
+    """
+    
+    opr.wipe()
+    initialize()
+    global TIME_MODE
+    global TIME_FRAME
+    global STOP_SIGNAL
+
+    Filesorter.ruler.FILEPATH = FILEPATH
+
+    if HEADLESS == "HEADLESS":
+        start()
+
+    else:
+
+        WIZARD_THREAD = threading.Thread(target=headmade_wizard, daemon=True)
+        WIZARD_THREAD.start()
+
+    try:
+        STOP_SIGNAL.wait()
+    except (KeyboardInterrupt, EOFError):
+        pass
 
     stop()
     deinitialize()
@@ -309,4 +334,11 @@ def direct_run() -> None:
 
 if __name__ == "__main__":
 
+
+    if HEADLESS:
+        print(HEADLESS)
+
+    trayicon.start_icon(stop)
     direct_run()
+
+    trayicon.stop_icon()
