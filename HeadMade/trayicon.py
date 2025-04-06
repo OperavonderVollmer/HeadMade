@@ -6,11 +6,12 @@ import threading
 import time
 import sys
 
-PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "HeadMade.ico")
-ICON = Image.open(PATH)
+SCRIPT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "HeadMade.ico")
+ICON = Image.open(SCRIPT_PATH)
 STOP_SIGNAL = threading.Event()
 ICON_THREAD = None
 STOP: callable = None
+FILEPATH: str = ""
 
 def stop_icon() -> None:
     global STOP_SIGNAL
@@ -29,7 +30,7 @@ def icon_thread() -> None:
         pystray.MenuItem("Exit", stop_icon)
     ))
 
-    opr.write_log("Headmade - Trayicon", os.path.abspath(__file__), "headmade_icon.log", "Starting trayicon thread...", "INFO")
+    opr.write_log("Headmade - Trayicon", FILEPATH, "headmade_icon.log", "Starting trayicon thread...", "INFO")
 
 
     i.run_detached()
@@ -39,15 +40,16 @@ def icon_thread() -> None:
         time.sleep(1)
 
 
-    opr.write_log("Headmade - Trayicon", os.path.abspath(__file__), "headmade_icon.log", "Stopping trayicon thread...", "INFO")
+    opr.write_log("Headmade - Trayicon", FILEPATH, "headmade_icon.log", "Stopping trayicon thread...", "INFO")
     i.stop()
 
-def start_icon(callback: callable) -> None:
+def start_icon(callback: callable, filepath: str) -> None:
     global ICON_THREAD
     global STOP
-
+    global FILEPATH
     
     ICON_THREAD = threading.Thread(target=icon_thread, daemon=True)
     ICON_THREAD.start()
 
     STOP = callback
+    FILEPATH = filepath

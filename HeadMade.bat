@@ -8,4 +8,4 @@ title HeadMade
 
 call ".\.venv\Scripts\activate.bat"
 
-python ".\HeadMade\HeadMade.py"
+python ".\main.py"

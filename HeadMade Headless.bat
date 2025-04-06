@@ -1,3 +1,3 @@
 @echo off
-start "" ".\.venv\Scripts\pythonw.exe" ".\HeadMade\HeadMade.py" "HEADLESS"
+start "" ".\.venv\Scripts\pythonw.exe" ".\main.py" "HEADLESS"
 

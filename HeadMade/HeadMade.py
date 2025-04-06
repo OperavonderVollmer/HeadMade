@@ -1,11 +1,11 @@
 from OperaPowerRelay import opr
-from HeadMade import Filesorter
 import os
 import datetime
 import threading
 import time
+
+from HeadMade import Filesorter
 from HeadMade import trayicon
-import sys
 
 
 FILEPATH = ""
@@ -14,7 +14,7 @@ TIME_MODE = ""
 TIME_FRAME = ""
 CONFIG_NAME = "config_headmade.json"
 
-HEADLESS = sys.argv[1] if len(sys.argv) > 1 else "No"
+HEADLESS: str = "No"
 
 FILESORTER_THREAD = None
 WIZARD_THREAD = None    
@@ -332,13 +332,16 @@ def direct_run() -> None:
     opr.wipe()
     opr.print_from("Headmade - Main", "Goodbye!")
 
-if __name__ == "__main__":
+def main(headless: str = "No") -> None:
+    global HEADLESS
 
+    HEADLESS = headless
 
-    if HEADLESS:
-        print(HEADLESS)
-
-    trayicon.start_icon(stop)
+    trayicon.start_icon(stop, os.path.dirname(FILEPATH))
     direct_run()
 
     trayicon.stop_icon()
+if __name__ == "__main__":
+
+    main()
+    
