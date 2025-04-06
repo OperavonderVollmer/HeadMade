@@ -1,5 +1,5 @@
-import ruler
-import sorter
+from HeadMade import ruler
+from HeadMade import sorter
 from OperaPowerRelay import opr
 
 

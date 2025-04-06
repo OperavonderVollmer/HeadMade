@@ -4,6 +4,10 @@ setup(
     name="HeadMade",
     version="1.0",
     packages=find_packages(),
+    package_data={
+        'HeadMade': ['assets/*'],  # Specify the folder/files to include
+    },
+    include_package_data=True,
     install_requires=[
         "Pillow",
         "pystray",

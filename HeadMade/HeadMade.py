@@ -1,10 +1,10 @@
 from OperaPowerRelay import opr
-import Filesorter
+from HeadMade import Filesorter
 import os
 import datetime
 import threading
 import time
-import trayicon
+from HeadMade import trayicon
 import sys
 
 
