@@ -550,7 +550,8 @@ def _display() -> None:
             _display_rules(path)
 
     else:        
-        opr.print_from("Filesorter - Display Rules", "{bg_red}No paths found{def}")
+        _ = os.path.join(os.path.dirname(FILEPATH), CONFIG_NAME)
+        opr.print_from("Filesorter - Display Rules", f"{{bg_red}}No paths found {_}{{def}}")
 
 def filesorter_wizard() -> None:
     try:
@@ -581,6 +582,8 @@ def filesorter_wizard() -> None:
     
     except KeyboardInterrupt:
         pass
+
+    opr.wipe(DEBUG)
 
 FILEPATH = ""
 CONFIG: dict[str, list[tuple[list, str]]] = {}

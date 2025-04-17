@@ -1,11 +1,12 @@
 from HeadMade import ruler
 from HeadMade import sorter
 from OperaPowerRelay import opr
+import os
 
 
 DEBUG = False
 
-def quickly() -> bool:
+def quickly(path:str=None) -> bool:
     
     """
     Executes the file sorting process using predefined rules.
@@ -29,23 +30,24 @@ def quickly() -> bool:
     """
 
     ruler.initialize()
-    ruler.DEBUG = False
+    ruler.DEBUG = DEBUG
 
 
     result = sorter.organize_by_rules(ruler.CONFIG)
-    if result:
-        opr.print_from("Filesorter - Quickly", "Successfully sorted files!")
 
-    else:
-        opr.print_from("Filesorter - Quickly", "Failed to sort files!")
-    
+    filepath = path or os.path.dirname(os.path.abspath(__file__))
 
+    if filepath is not None:
+        if result:
+            opr.write_log("Filesorter - Quickly", filepath, "Headmade.log", "Successfully sorted files.", "SUCCESS")
+        else:
+            opr.write_log("Filesorter - Quickly", filepath, "Headmade.log", "Something went wrong while sorting files.", "FAILURE")
     ruler.deinitialize()
 
     return result
 
 if __name__ == "__main__":
-    opr.wipe(False)
+    opr.wipe(DEBUG)
     ruler.initialize()
     ruler.DEBUG = DEBUG
     
@@ -54,7 +56,7 @@ if __name__ == "__main__":
             decision = opr.input_from("Filesorter - Main", "📂 Edit Rules [1] | 🚀 Start Sorting [2] | 🚪 Exit [3]", 1)
 
             if decision == "1":
-                opr.wipe(False)
+                opr.wipe(DEBUG)
                 ruler.filesorter_wizard()
 
             elif decision == "2":

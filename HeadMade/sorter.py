@@ -4,24 +4,26 @@ import re
 import os
 import traceback
 import shutil
+from datetime import date
 
-
-def organize_by_rules(path_and_rules: dict[str, list[tuple[list, str]]]) -> None:
+def organize_by_rules(path_and_rules: dict[str, list[tuple[list, str]]]) -> bool:
     global MOVED_FOLDERS
     MOVED_FOLDERS = set()
 
     if not any(path_and_rules.keys()):
         opr.wipe()
         opr.print_from("Filesorter - Organize", "{bg_red}No paths found{def}")
-        return
+        return False
 
     for path in path_and_rules.keys():
         if not os.path.exists(path):
             opr.print_from("Filesorter - Organize", f"{{bg_red}}Path {path} does not exist{{def}}")
-            return
+            return False
         
         opr.print_from("Filesorter - Organize", f"{{bg_whi}}Organizing {path}{{def}}")
         _judicial_court(path, path_and_rules[path])
+
+    return True
 
 def _judicial_court(path, rule_destination: list[tuple[list, str]]) -> None:
     
@@ -71,6 +73,19 @@ def judge(crime: str, defendant: str, scene: str, jail: str) -> bool:
             # checks if the file is inside the directory under watch and moves it exclusively
             if os.path.dirname(defendant) == scene:
                 opr.print_from("Filesorter - Judge", f"{{bg_blu}}Moving '{os.path.basename(defendant)}' from '{os.path.dirname(defendant)}' to '{jail}'{{def}}")
+
+                if os.path.exists(os.path.join(jail, os.path.basename(defendant))):
+
+                    today = date.today().strftime("%Y-%m-%d")
+                    base, ext = os.path.splitext(os.path.basename(defendant))
+                    renamed = f"{base}_{today}{ext}"
+                    duplicate = os.path.join(os.path.dirname(defendant), renamed)
+
+                    os.rename(defendant, duplicate)
+                    defendant = duplicate
+
+    #NOTE: THIS HASN'T BEEN TESTED YET
+                    
                 shutil.move(defendant, jail)
                 return
 

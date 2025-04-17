@@ -13,6 +13,7 @@ CONFIG = {}
 TIME_MODE = ""
 TIME_FRAME = ""
 CONFIG_NAME = "config_headmade.json"
+DEBUG=True
 
 HEADLESS: str = "No"
 
@@ -75,7 +76,7 @@ def _get_time_mode(mode: str = "") -> str:
     
     while True:
 
-        opr.wipe()
+        opr.wipe(DEBUG)
         mode = opr.input_from("Headmade - Time Mode", "Select time mode (Interval [1] | Schedule [2]) ", 1)
 
         if mode == "1":
@@ -91,13 +92,13 @@ def _get_time_frame() -> str | None:
     
 
     if not TIME_MODE:
-        opr.wipe()
+        opr.wipe(DEBUG)
         opr.print_from("Headmade - Time Frame", "{bg_red}Please set time mode first{def}")
         return None 
 
     while True:
 
-        opr.wipe()
+        opr.wipe(DEBUG)
 
         while True:
             opr.print_from("Headmade - Time Frame", f"Select time frame for {TIME_MODE} mode")
@@ -148,6 +149,9 @@ def _get_time_frame_schedule() -> str | None:
     ct = int(_get_time_frame_interval(str(current_time)))
     tt = int(_get_time_frame_interval(str(target_time)))
 
+    if tt < ct:
+        tt += int(_get_time_frame_interval("24:00:00"))
+
     delta = tt - ct
 
     if delta == 0:
@@ -163,7 +167,6 @@ def _filesorter_thread() -> None:
         opr.print_from("Headmade - Filesorter", "{bg_red}Please set time mode and time frame first{def}")
         return
     
-    first_run = True
     
     while not STOP_SIGNAL.is_set():    
         wait = 0
@@ -173,19 +176,14 @@ def _filesorter_thread() -> None:
         elif TIME_MODE == "Schedule":
             wait = int(_get_time_frame_schedule())
 
-        if first_run:        
-            user_input = opr.input_timed("Headmade - Filesorter", f"Wait {opr.seconds_to_time(wait)} before starting file sorter. Would you like to start now?", 1, 10)
-            if user_input and user_input == "y":
-                wait = 0.1
+        wait = abs(wait)         
 
-        first_run = False
 
-        opr.print_from("Headmade - Filesorter", f"Sleeping for {wait} seconds")
+        opr.print_from("Headmade - Filesorter", f"Sleeping for {wait} seconds", 1)
         time.sleep(wait)
-        opr.print_from("Headmade - Filesorter", "Awake~! Starting file sorter...")
+        opr.print_from("Headmade - Filesorter", "Awake~! Starting file sorter...", 1)
         
-        if not Filesorter.quickly():
-            opr.write_log("Headmade - Filesorter", os.path.dirname(FILEPATH), "Headmade.log", "Something went wrong", "ERROR")
+        if not Filesorter.quickly(os.path.dirname(FILEPATH)):
             return
 
 def start() -> None:
@@ -264,14 +262,15 @@ def headmade_wizard() -> None:
             if decision == "1":
                 sort_now = opr.input_from("Headmade - Main", "Would you like to sort now? [y]", 1)
                 if sort_now == "y":
-                    Filesorter.quickly()
+                    Filesorter.quickly(os.path.dirname(FILEPATH))
+                
                 start()
 
             elif decision == "2":
                 setup()
 
             elif decision == "3":
-                opr.wipe()
+                opr.wipe(DEBUG)
                 Filesorter.ruler.filesorter_wizard()
 
             elif decision == "4":
@@ -281,7 +280,6 @@ def headmade_wizard() -> None:
             else:
                 opr.print_from("Headmade - Main", "{bg_red}Invalid input{def}")
 
-            opr.wipe()
 
         except (KeyboardInterrupt, EOFError):
             break
@@ -306,15 +304,19 @@ def direct_run() -> None:
     None
     """
     
-    opr.wipe()
+    opr.wipe(debug=DEBUG)
     initialize()
     global TIME_MODE
     global TIME_FRAME
     global STOP_SIGNAL
 
+
     Filesorter.ruler.FILEPATH = FILEPATH
+    Filesorter.DEBUG = DEBUG
+    Filesorter.ruler.initialize()
 
     if HEADLESS == "HEADLESS":
+        Filesorter.quickly()
         start()
 
     else:
@@ -329,7 +331,7 @@ def direct_run() -> None:
 
     stop()
     deinitialize()
-    opr.wipe()
+    opr.wipe(DEBUG)
     opr.print_from("Headmade - Main", "Goodbye!")
 
 def main(headless: str = "No") -> None:
@@ -341,6 +343,7 @@ def main(headless: str = "No") -> None:
     direct_run()
 
     trayicon.stop_icon()
+
 if __name__ == "__main__":
 
     main()
