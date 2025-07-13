@@ -20,7 +20,7 @@ def organize_by_rules(path_and_rules: dict[str, list[tuple[list, str]]]) -> bool
             opr.print_from("Filesorter - Organize", f"{{bg_red}}Path {path} does not exist{{def}}")
             return False
         
-        opr.print_from("Filesorter - Organize", f"{{bg_whi}}Organizing {path}{{def}}")
+        opr.print_from("Filesorter - Organize", f"{{bg_blu}}Organizing {path}{{def}}")
         _judicial_court(path, path_and_rules[path])
 
     return True

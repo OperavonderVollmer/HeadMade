@@ -30,8 +30,9 @@ def _load() -> None:
     global CONFIG
 
 
+    print("HERE " + FILEPATH)
     opr.print_from("Filesorter - Load", "Initializing Filesorter...")
-    opr.print_from("Filesorter - Load", f"Saving config file: {FILEPATH}")
+    opr.print_from("Filesorter - Load", f"Saving config file: {os.path.join(os.path.dirname(FILEPATH), CONFIG_NAME)}")
     CONFIG = {}
     CONFIG = opr.load_json("Filesorter - Load", os.path.dirname(FILEPATH), filename=CONFIG_NAME)
 
@@ -68,7 +69,7 @@ def _add() -> None:
             continue
         if os.path.isfile(path):
             path = os.path.dirname(path)
-        _ = opr.input_from("Filesorter - Wizard | Add", f"{{bg_whi}}'{path}'{{def}} Is this correct? [y]")
+        _ = opr.input_from("Filesorter - Wizard | Add", f"{{bg_blu}}'{path}'{{def}} Is this correct? [y]")
         if _.lower().strip() == "y":
             break
 
@@ -192,7 +193,7 @@ def _edit_path(path: str) -> None:
 
         if os.path.isfile(new_path):
             new_path = os.path.dirname(new_path)
-        confirm = opr.input_from("Filesorter - Wizard | Edit Path", f"{{bg_whi}}'{new_path}'{{def}} Is this correct? [y]")
+        confirm = opr.input_from("Filesorter - Wizard | Edit Path", f"{{bg_blu}}'{new_path}'{{def}} Is this correct? [y]")
 
         if confirm.lower().strip() == "y":
             break
@@ -371,7 +372,7 @@ def _select_rule_types() -> list:
     selected_rules = []
     while True:
         for idx, rule in enumerate(rule_types, 1):
-            opr.print_from("Filesorter - Wizard | Select Rule Types", f"{{bg_whi}}[{idx}] {rule}{{def}}")
+            opr.print_from("Filesorter - Wizard | Select Rule Types", f"{{bg_blu}}[{idx}] {rule}{{def}}")
 
         decision = opr.input_from("Filesorter - Wizard | Select Rule Types", "Enter numbers separated by commas (e.g. 1, 2, 3) or all")
 
